@@ -110,27 +110,27 @@ class appDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
         }
 
         if (0 === strpos($pathinfo, '/events')) {
-            // places_list
+            // events_list
             if ($pathinfo === '/events') {
                 if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
                     $allow = array_merge($allow, array('GET', 'HEAD'));
-                    goto not_places_list;
+                    goto not_events_list;
                 }
 
-                return array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsAction',  '_route' => 'places_list',);
+                return array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsAction',  '_route' => 'events_list',);
             }
-            not_places_list:
+            not_events_list:
 
-            // places_one
+            // events_one
             if (preg_match('#^/events/(?P<event_id>[^/]++)$#s', $pathinfo, $matches)) {
                 if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
                     $allow = array_merge($allow, array('GET', 'HEAD'));
-                    goto not_places_one;
+                    goto not_events_one;
                 }
 
-                return $this->mergeDefaults(array_replace($matches, array('_route' => 'places_one')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventAction',));
+                return $this->mergeDefaults(array_replace($matches, array('_route' => 'events_one')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventAction',));
             }
-            not_places_one:
+            not_events_one:
 
         }
 

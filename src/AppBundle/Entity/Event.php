@@ -22,13 +22,21 @@ class Event
     protected $name;
 
     /**
-   * @var \date
-   *
-   * Date de publication
-   *
-   * @ORM\Column(name="date", type="date", nullable=true, options={"comment":"Date de publication"})
-   */
-  private $date;
+    * Many Events have One Category.
+    *
+    * @ORM\ManyToOne(targetEntity="AppBundle\Entity\Category")
+    * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
+    */
+    private $category;
+
+    /**
+     * @var \date
+     *
+     * Date de publication
+     *
+     * @ORM\Column(name="date", type="date", nullable=true, options={"comment":"Date de publication"})
+     */
+    private $date;
 
     /**
      * @ORM\Column(type="integer")
@@ -261,5 +269,30 @@ class Event
     public function getDate()
     {
         return $this->date;
+    }
+
+
+    /**
+     * Set category
+     *
+     * @param \AppBundle\Entity\Category $category
+     *
+     * @return Event
+     */
+    public function setCategory(\AppBundle\Entity\Category $category = null)
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    /**
+     * Get category
+     *
+     * @return \AppBundle\Entity\Category
+     */
+    public function getCategory()
+    {
+        return $this->category;
     }
 }

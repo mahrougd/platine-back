@@ -26,7 +26,8 @@ class EventController extends Controller
             $formatted[] = [
                'id'               => $event->getId(),
                'name'             => $event->getName(),
-               'date'             => $event->getDate(),
+               'category'         => $event->getCategory()->getValue(),
+               'date'             => $event->getDate()->format('Y-m-d H:i:s'),
                'price'            => $event->getPrice(),
                'description'      => $event->getDescription(),
                'email'            => $event->getEmail(),
