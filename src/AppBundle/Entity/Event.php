@@ -22,40 +22,244 @@ class Event
     protected $name;
 
     /**
+   * @var \date
+   *
+   * Date de publication
+   *
+   * @ORM\Column(name="date", type="date", nullable=true, options={"comment":"Date de publication"})
+   */
+  private $date;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    protected $price;
+
+    /**
      * @ORM\Column(type="string")
      */
-    protected $address;
+    protected $description;
 
+    /**
+     * @ORM\Column(type="string")
+     */
+    protected $email;
+
+    /**
+     * @ORM\Column(type="string")
+     */
+    protected $location;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    protected $totalplaces;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    protected $availableplaces;
+
+
+    /**
+     * Get id
+     *
+     * @return integer
+     */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Event
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
     }
 
-    public function getAddress()
+    /**
+     * Set price
+     *
+     * @param integer $price
+     *
+     * @return Event
+     */
+    public function setPrice($price)
     {
-        return $this->address;
-    }
+        $this->price = $price;
 
-    public function setId($id)
-    {
-        $this->id = $id;
         return $this;
     }
 
-    public function setName($name)
+    /**
+     * Get price
+     *
+     * @return integer
+     */
+    public function getPrice()
     {
-        $this->name = $name;
+        return $this->price;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return Event
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
         return $this;
     }
 
-    public function setAddress($address)
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
     {
-        $this->address = $address;
+        return $this->description;
+    }
+
+    /**
+     * Set email
+     *
+     * @param string $email
+     *
+     * @return Event
+     */
+    public function setEmail($email)
+    {
+        $this->email = $email;
+
         return $this;
+    }
+
+    /**
+     * Get email
+     *
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
+     * Set location
+     *
+     * @param string $location
+     *
+     * @return Event
+     */
+    public function setLocation($location)
+    {
+        $this->location = $location;
+
+        return $this;
+    }
+
+    /**
+     * Get location
+     *
+     * @return string
+     */
+    public function getLocation()
+    {
+        return $this->location;
+    }
+
+    /**
+     * Set totalplaces
+     *
+     * @param integer $totalplaces
+     *
+     * @return Event
+     */
+    public function setTotalplaces($totalplaces)
+    {
+        $this->totalplaces = $totalplaces;
+
+        return $this;
+    }
+
+    /**
+     * Get totalplaces
+     *
+     * @return integer
+     */
+    public function getTotalplaces()
+    {
+        return $this->totalplaces;
+    }
+
+    /**
+     * Set availableplaces
+     *
+     * @param integer $availableplaces
+     *
+     * @return Event
+     */
+    public function setAvailableplaces($availableplaces)
+    {
+        $this->availableplaces = $availableplaces;
+
+        return $this;
+    }
+
+    /**
+     * Get availableplaces
+     *
+     * @return integer
+     */
+    public function getAvailableplaces()
+    {
+        return $this->availableplaces;
+    }
+
+    /**
+     * Set date
+     *
+     * @param \DateTime $date
+     *
+     * @return Event
+     */
+    public function setDate($date)
+    {
+        $this->date = $date;
+
+        return $this;
+    }
+
+    /**
+     * Get date
+     *
+     * @return \DateTime
+     */
+    public function getDate()
+    {
+        return $this->date;
     }
 }
