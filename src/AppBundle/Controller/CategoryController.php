@@ -7,51 +7,56 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\View\View;
 use AppBundle\Entity\Category;
 
-class EventController extends Controller
+class CategoryController extends Controller
 {
-    /**
-     * @Route("/categories", name="categories_list")
-     * @Method({"GET"})
-     */
+  /**
+   * @Rest\View()
+   * @Get("/categories")
+   */
     public function getCategoriesAction(Request $request)
     {
         $categories = $this->get('doctrine.orm.entity_manager')
                 ->getRepository('AppBundle:Category')
                 ->findAll();
-
-        $formatted = [];
-        foreach ($categories as $category) {
-            $formatted[] = [
-               'id'                => $category->getId(),
-               'value'             => $category->getValue(),
-            ];
-        }
-
-        return new JsonResponse($formatted);
+         return $categories;
     }
 
     /**
-     * @Route("/events/{category_id}", name="categories_one")
-     * @Method({"GET"})
-     */
-    public function getEventAction(Request $request)
+      * @Rest\View()
+      * @Rest\Get("/categories/{id}")
+      */
+     public function getCategoryAction(Request $request)
+     {
+         $category = $this->get('doctrine.orm.entity_manager')
+                 ->getRepository('AppBundle:Category')
+                 ->find($request->get('id'));
+
+         if (empty($category)) {
+             return new JsonResponse(['message' => '$category not found'], Response::HTTP_NOT_FOUND);
+         }
+
+         return $category;
+     }
+
+    /**
+    * @Rest\View(statusCode=Response::HTTP_CREATED)
+    * @Rest\Post("/categories")
+    */
+    public function postCategoriesAction(Request $request)
     {
-        $event = $this->get('doctrine.orm.entity_manager')
-                ->getRepository('AppBundle:Category')
-                ->find($request->get('category_id'));
+      $category = new Category();
+      $category->setValue($request->get('value'));
 
+      $em = $this->get('doctrine.orm.entity_manager');
+      $em->persist($category);
+      $em->flush();
 
-        if (empty($event)) {
-            return new JsonResponse(['message' => 'Aucune catégorie trouvée'], Response::HTTP_NOT_FOUND);
-        }
-
-        $formatted = [
-          'id'               => $event->getId(),
-          'value'            => $event->getValue(),
-        ];
-
-        return new JsonResponse($formatted);
+      return $category;
     }
+
 }

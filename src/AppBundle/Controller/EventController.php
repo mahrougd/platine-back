@@ -7,66 +7,89 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\View\View;
 use AppBundle\Entity\Event;
+use Doctrine\ORM\Query;
 
 class EventController extends Controller
 {
-    /**
-     * @Route("/events", name="events_list")
-     * @Method({"GET"})
-     */
+  /**
+   * @Rest\View()
+   * @Get("/events")
+   */
     public function getEventsAction(Request $request)
     {
         $events = $this->get('doctrine.orm.entity_manager')
                 ->getRepository('AppBundle:Event')
-                ->findAll();
-
-        $formatted = [];
-        foreach ($events as $event) {
-            $formatted[] = [
-               'id'               => $event->getId(),
-               'name'             => $event->getName(),
-               'category'         => $event->getCategory()->getValue(),
-               'date'             => $event->getDate()->format('Y-m-d H:i:s'),
-               'price'            => $event->getPrice(),
-               'description'      => $event->getDescription(),
-               'email'            => $event->getEmail(),
-               'location'         => $event->getLocation(),
-               'totalplaces'      => $event->getTotalplaces(),
-                'availableplaces' => $event->getAvailableplaces(),
-            ];
-        }
-
-        return new JsonResponse($formatted);
+                ->findBy(array(), array('date' => 'ASC'));
+         return $events;
     }
 
     /**
-     * @Route("/events/{event_id}", name="events_one")
-     * @Method({"GET"})
-     */
-    public function getEventAction(Request $request)
+      * @Rest\View()
+      * @Rest\Get("/events/{id}")
+      */
+     public function getEventAction(Request $request)
+     {
+         $place = $this->get('doctrine.orm.entity_manager')
+                 ->getRepository('AppBundle:Event')
+                 ->find($request->get('id'));
+
+         if (empty($place))
+         {
+             return new JsonResponse(['message' => 'Place not found'], Response::HTTP_NOT_FOUND);
+         }
+
+         return $place;
+     }
+
+    /**
+    * @Rest\View(statusCode=Response::HTTP_CREATED)
+    * @Rest\Post("/events")
+    */
+    public function postEventsAction(Request $request)
     {
-        $event = $this->get('doctrine.orm.entity_manager')
-                ->getRepository('AppBundle:Event')
-                ->find($request->get('event_id'));
+      $event = new Event();
+      $event->setName($request->get('name'))
+          ->setEmail($request->get('email'))
+          ->setPrice($request->get('price'));
 
+      $em = $this->get('doctrine.orm.entity_manager');
+      $em->persist($event);
+      $em->flush();
 
-        if (empty($event)) {
-            return new JsonResponse(['message' => 'Aucun événement trouvée'], Response::HTTP_NOT_FOUND);
-        }
-
-        $formatted = [
-          'id'               => $event->getId(),
-          'name'             => $event->getName(),
-          'date'             => $event->getDate(),
-          'price'            => $event->getPrice(),
-          'description'      => $event->getDescription(),
-          'email'            => $event->getEmail(),
-          'location'         => $event->getLocation(),
-          'totalplaces'      => $event->getTotalplaces(),
-           'availableplaces' => $event->getAvailableplaces(),
-        ];
-
-        return new JsonResponse($formatted);
+      return $event;
     }
+
+    /**
+      * @Rest\View()
+      * @Rest\Get("/eventsbycat/{id}")
+      */
+     public function getEventsbycatAction(Request $request)
+     {
+        $place = $this->get('doctrine.orm.entity_manager')
+                 ->getRepository('AppBundle:Event')
+                 ->findby(['category' => $request->get('id')]);
+
+         if (empty($place)) {
+             return new JsonResponse(['message' => 'Place not found'], Response::HTTP_NOT_FOUND);
+         }
+
+         return $place;
+
+     }
+
+     /**
+       * @Rest\View()
+       * @Rest\Get("/eventsbyname/{name}")
+       */
+      public function getEventsbynameAction(Request $request)
+      {
+
+        $place = $this->get('doctrine.orm.entity_manager')->createQuery("select u from AppBundle\Entity\Event u where u.name like '%".$request->get('name')."%'");
+
+        return $place->getResult();
+      }
 }

@@ -100,37 +100,100 @@ class appDevDebugProjectContainerUrlMatcher extends Symfony\Bundle\FrameworkBund
 
         }
 
-        // homepage
-        if (rtrim($pathinfo, '/') === '') {
-            if (substr($pathinfo, -1) !== '/') {
-                return $this->redirect($pathinfo.'/', 'homepage');
-            }
-
-            return array (  '_controller' => 'AppBundle\\Controller\\DefaultController::indexAction',  '_route' => 'homepage',);
-        }
-
         if (0 === strpos($pathinfo, '/events')) {
-            // events_list
+            // get_events
             if ($pathinfo === '/events') {
                 if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
                     $allow = array_merge($allow, array('GET', 'HEAD'));
-                    goto not_events_list;
+                    goto not_get_events;
                 }
 
-                return array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsAction',  '_route' => 'events_list',);
+                return array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsAction',  '_format' => NULL,  '_route' => 'get_events',);
             }
-            not_events_list:
+            not_get_events:
 
-            // events_one
-            if (preg_match('#^/events/(?P<event_id>[^/]++)$#s', $pathinfo, $matches)) {
+            // get_event
+            if (preg_match('#^/events/(?P<id>[^/]++)$#s', $pathinfo, $matches)) {
                 if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
                     $allow = array_merge($allow, array('GET', 'HEAD'));
-                    goto not_events_one;
+                    goto not_get_event;
                 }
 
-                return $this->mergeDefaults(array_replace($matches, array('_route' => 'events_one')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventAction',));
+                return $this->mergeDefaults(array_replace($matches, array('_route' => 'get_event')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventAction',  '_format' => NULL,));
             }
-            not_events_one:
+            not_get_event:
+
+            // post_events
+            if ($pathinfo === '/events') {
+                if ($this->context->getMethod() != 'POST') {
+                    $allow[] = 'POST';
+                    goto not_post_events;
+                }
+
+                return array (  '_controller' => 'AppBundle\\Controller\\EventController::postEventsAction',  '_format' => NULL,  '_route' => 'post_events',);
+            }
+            not_post_events:
+
+            if (0 === strpos($pathinfo, '/eventsby')) {
+                // get_eventsbycat
+                if (0 === strpos($pathinfo, '/eventsbycat') && preg_match('#^/eventsbycat/(?P<id>[^/]++)$#s', $pathinfo, $matches)) {
+                    if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
+                        $allow = array_merge($allow, array('GET', 'HEAD'));
+                        goto not_get_eventsbycat;
+                    }
+
+                    return $this->mergeDefaults(array_replace($matches, array('_route' => 'get_eventsbycat')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsbycatAction',  '_format' => NULL,));
+                }
+                not_get_eventsbycat:
+
+                // get_eventsbyname
+                if (0 === strpos($pathinfo, '/eventsbyname') && preg_match('#^/eventsbyname/(?P<name>[^/]++)$#s', $pathinfo, $matches)) {
+                    if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
+                        $allow = array_merge($allow, array('GET', 'HEAD'));
+                        goto not_get_eventsbyname;
+                    }
+
+                    return $this->mergeDefaults(array_replace($matches, array('_route' => 'get_eventsbyname')), array (  '_controller' => 'AppBundle\\Controller\\EventController::getEventsbynameAction',  '_format' => NULL,));
+                }
+                not_get_eventsbyname:
+
+            }
+
+        }
+
+        if (0 === strpos($pathinfo, '/categories')) {
+            // get_categories
+            if ($pathinfo === '/categories') {
+                if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
+                    $allow = array_merge($allow, array('GET', 'HEAD'));
+                    goto not_get_categories;
+                }
+
+                return array (  '_controller' => 'AppBundle\\Controller\\CategoryController::getCategoriesAction',  '_format' => NULL,  '_route' => 'get_categories',);
+            }
+            not_get_categories:
+
+            // get_category
+            if (preg_match('#^/categories/(?P<id>[^/]++)$#s', $pathinfo, $matches)) {
+                if (!in_array($this->context->getMethod(), array('GET', 'HEAD'))) {
+                    $allow = array_merge($allow, array('GET', 'HEAD'));
+                    goto not_get_category;
+                }
+
+                return $this->mergeDefaults(array_replace($matches, array('_route' => 'get_category')), array (  '_controller' => 'AppBundle\\Controller\\CategoryController::getCategoryAction',  '_format' => NULL,));
+            }
+            not_get_category:
+
+            // post_categories
+            if ($pathinfo === '/categories') {
+                if ($this->context->getMethod() != 'POST') {
+                    $allow[] = 'POST';
+                    goto not_post_categories;
+                }
+
+                return array (  '_controller' => 'AppBundle\\Controller\\CategoryController::postCategoriesAction',  '_format' => NULL,  '_route' => 'post_categories',);
+            }
+            not_post_categories:
 
         }
 
