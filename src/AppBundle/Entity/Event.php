@@ -34,7 +34,7 @@ class Event
      *
      * Date de publication
      *
-     * @ORM\Column(name="date", type="date", nullable=true, options={"comment":"Date de publication"})
+     * @ORM\Column(name="date", type="datetime", nullable=true, options={"comment":"Date de publication"})
      */
     private $date;
 

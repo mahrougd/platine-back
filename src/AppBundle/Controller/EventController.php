@@ -33,16 +33,16 @@ class EventController extends Controller
       */
      public function getEventAction(Request $request)
      {
-         $place = $this->get('doctrine.orm.entity_manager')
+         $event = $this->get('doctrine.orm.entity_manager')
                  ->getRepository('AppBundle:Event')
                  ->find($request->get('id'));
 
-         if (empty($place))
+         if (empty($event))
          {
-             return new JsonResponse(['message' => 'Place not found'], Response::HTTP_NOT_FOUND);
+             return new JsonResponse(['message' => 'Aucun événement trouvé'], Response::HTTP_NOT_FOUND);
          }
 
-         return $place;
+         return $event;
      }
 
     /**
@@ -52,9 +52,28 @@ class EventController extends Controller
     public function postEventsAction(Request $request)
     {
       $event = new Event();
+
+      $category = $this->get('doctrine.orm.entity_manager')
+              ->getRepository('AppBundle:Category')
+              ->find($request->get('category_id'));
+
+      $date     = $request->get('date');
+      $minute		=	substr($date, 14, 2);
+      $hour	    =	substr($date, 11, 2);
+      $day 		  =	substr($date, 8, 2);
+      $month 		=	substr($date, 5, 2);
+      $year 		=	substr($date, 0, 4);
+
+      $datetime 	= 	new \DateTime($year.'-'.$month.'-'.$day.' '.$hour.':'.$minute.':00');
+
       $event->setName($request->get('name'))
+          ->setCategory($category)
+          ->setDate($datetime)
+          ->setPrice($request->get('price'))
+          ->setDescription($request->get('description'))
           ->setEmail($request->get('email'))
-          ->setPrice($request->get('price'));
+          ->setLocation($request->get('location'))
+          ->setTotalplaces($request->get('totalplaces'));
 
       $em = $this->get('doctrine.orm.entity_manager');
       $em->persist($event);
@@ -69,15 +88,15 @@ class EventController extends Controller
       */
      public function getEventsbycatAction(Request $request)
      {
-        $place = $this->get('doctrine.orm.entity_manager')
+        $eventsbycat = $this->get('doctrine.orm.entity_manager')
                  ->getRepository('AppBundle:Event')
-                 ->findby(['category' => $request->get('id')]);
+                 ->findby(['category' => $request->get('id')], array('date' => 'ASC'));
 
-         if (empty($place)) {
-             return new JsonResponse(['message' => 'Place not found'], Response::HTTP_NOT_FOUND);
+         if (empty($eventsbycat)) {
+             return new JsonResponse(['message' => 'Aucun événement trouvé'], Response::HTTP_NOT_FOUND);
          }
 
-         return $place;
+         return $eventsbycat;
 
      }
 
@@ -88,8 +107,11 @@ class EventController extends Controller
       public function getEventsbynameAction(Request $request)
       {
 
-        $place = $this->get('doctrine.orm.entity_manager')->createQuery("select u from AppBundle\Entity\Event u where u.name like '%".$request->get('name')."%'");
+        $eventsbyname = $this->get('doctrine.orm.entity_manager')->createQuery("select u from AppBundle\Entity\Event u where u.name like '%".$request->get('name')."%' order by u.date ASC");
 
-        return $place->getResult();
+        if (empty($eventsbyname)) {
+            return new JsonResponse(['message' => 'Aucun événement trouvé'], Response::HTTP_NOT_FOUND);
+        }
+        return $eventsbyname->getResult();
       }
 }
