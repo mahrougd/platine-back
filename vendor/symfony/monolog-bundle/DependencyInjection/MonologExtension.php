@@ -17,8 +17,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Elastica\Client;
 
 /**
  * MonologExtension is an extension for the Monolog library.
@@ -52,12 +50,11 @@ class MonologExtension extends Extension
         if (isset($config['handlers'])) {
             $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
             $loader->load('monolog.xml');
-            $container->setAlias('logger', 'monolog.logger');
 
             $container->setParameter('monolog.use_microseconds', $config['use_microseconds']);
 
-            // always autowire the main logger, require Symfony >= 2.8
-            if (method_exists('Symfony\Component\DependencyInjection\Definition', 'addAutowiringType')) {
+            // always autowire the main logger, require Symfony >= 2.8, < 3.3
+            if (!method_exists('Symfony\Component\DependencyInjection\ContainerBuilder', 'fileExists') && method_exists('Symfony\Component\DependencyInjection\Definition', 'addAutowiringType')) {
                 $container->getDefinition('monolog.logger')->addAutowiringType('Psr\Log\LoggerInterface');
             }
 
@@ -185,22 +182,18 @@ class MonologExtension extends Extension
 
         case 'gelf':
             if (isset($handler['publisher']['id'])) {
-                $publisherId = $handler['publisher']['id'];
+                $publisher = new Reference($handler['publisher']['id']);
             } elseif (class_exists('Gelf\Transport\UdpTransport')) {
                 $transport = new Definition("Gelf\Transport\UdpTransport", array(
                     $handler['publisher']['hostname'],
                     $handler['publisher']['port'],
                     $handler['publisher']['chunk_size'],
                 ));
-                $transportId = uniqid('monolog.gelf.transport.', true);
                 $transport->setPublic(false);
-                $container->setDefinition($transportId, $transport);
 
                 $publisher = new Definition('Gelf\Publisher', array());
-                $publisher->addMethodCall('addTransport', array(new Reference($transportId)));
-                $publisherId = uniqid('monolog.gelf.publisher.', true);
+                $publisher->addMethodCall('addTransport', array($transport));
                 $publisher->setPublic(false);
-                $container->setDefinition($publisherId, $publisher);
             } elseif (class_exists('Gelf\MessagePublisher')) {
                 $publisher = new Definition('Gelf\MessagePublisher', array(
                     $handler['publisher']['hostname'],
@@ -208,15 +201,13 @@ class MonologExtension extends Extension
                     $handler['publisher']['chunk_size'],
                 ));
 
-                $publisherId = uniqid('monolog.gelf.publisher.', true);
                 $publisher->setPublic(false);
-                $container->setDefinition($publisherId, $publisher);
             } else {
                 throw new \RuntimeException('The gelf handler requires the graylog2/gelf-php package to be installed');
             }
 
             $definition->setArguments(array(
-                new Reference($publisherId),
+                $publisher,
                 $handler['level'],
                 $handler['bubble'],
             ));
@@ -224,7 +215,7 @@ class MonologExtension extends Extension
 
         case 'mongo':
             if (isset($handler['mongo']['id'])) {
-                $clientId = $handler['mongo']['id'];
+                $client = new Reference($handler['mongo']['id']);
             } else {
                 $server = 'mongodb://';
 
@@ -238,13 +229,11 @@ class MonologExtension extends Extension
                     $server,
                 ));
 
-                $clientId = uniqid('monolog.mongo.client.', true);
                 $client->setPublic(false);
-                $container->setDefinition($clientId, $client);
             }
 
             $definition->setArguments(array(
-                new Reference($clientId),
+                $client,
                 $handler['mongo']['database'],
                 $handler['mongo']['collection'],
                 $handler['level'],
@@ -254,7 +243,7 @@ class MonologExtension extends Extension
 
         case 'elasticsearch':
             if (isset($handler['elasticsearch']['id'])) {
-                $clientId = $handler['elasticsearch']['id'];
+                $elasticaClient = new Reference($handler['elasticsearch']['id']);
             } else {
                 // elastica client new definition
                 $elasticaClient = new Definition('Elastica\Client');
@@ -269,7 +258,7 @@ class MonologExtension extends Extension
                         $elasticaClientArguments,
                         array(
                             'headers' => array(
-                                'Authorization ' =>  'Basic ' . base64_encode($handler['elasticsearch']['user'] . ':' . $handler['elasticsearch']['password'])
+                                'Authorization' => 'Basic ' . base64_encode($handler['elasticsearch']['user'] . ':' . $handler['elasticsearch']['password'])
                             )
                         )
                     );
@@ -279,14 +268,12 @@ class MonologExtension extends Extension
                     $elasticaClientArguments
                 ));
 
-                $clientId = uniqid('monolog.elastica.client.', true);
                 $elasticaClient->setPublic(false);
-                $container->setDefinition($clientId, $elasticaClient);
             }
 
             // elastica handler definition
             $definition->setArguments(array(
-                new Reference($clientId),
+                $elasticaClient,
                 array(
                     'index' => $handler['index'],
                     'type' => $handler['document_type'],
@@ -550,9 +537,9 @@ class MonologExtension extends Extension
 
         case 'slackbot':
             $definition->setArguments(array(
-                $handler['slack_team'],
+                $handler['team'],
                 $handler['token'],
-                $handler['channel'],
+                urlencode($handler['channel']),
                 $handler['level'],
                 $handler['bubble'],
             ));
@@ -678,6 +665,17 @@ class MonologExtension extends Extension
                 $handler['app_name'],
             ));
             break;
+        case 'server_log':
+            if (!class_exists('Symfony\Bridge\Monolog\Handler\ServerLogHandler')) {
+                throw new \RuntimeException('The ServerLogHandler is not available. Please update "symfony/monolog-bridge" to 3.3.');
+            }
+
+            $definition->setArguments(array(
+                $handler['host'],
+                $handler['level'],
+                $handler['bubble'],
+            ));
+            break;
 
         // Handlers using the constructor of AbstractHandler without adding their own arguments
         case 'browser_console':
@@ -760,6 +758,7 @@ class MonologExtension extends Extension
             'filter' => 'Monolog\Handler\FilterHandler',
             'mongo' => 'Monolog\Handler\MongoDBHandler',
             'elasticsearch' => 'Monolog\Handler\ElasticSearchHandler',
+            'server_log' => 'Symfony\Bridge\Monolog\Handler\ServerLogHandler',
         );
 
         if (!isset($typeToClassMapping[$handlerType])) {

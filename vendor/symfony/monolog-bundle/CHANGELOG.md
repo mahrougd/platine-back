@@ -1,3 +1,26 @@
+## 3.2.0 (2018-03-05)
+
+* Removed randomness from the container build
+* Fixed support for the `monolog.logger` tag specifying a channel in combination with Symfony 3.4+ autowiring
+* Fixed visibility of channels configured explicitly in the bundle config (they are now public in Symfony 4 too)
+* Fixed invalid service definitions
+
+## 3.1.2 (2017-11-06)
+
+* fix invalid usage of count()
+
+## 3.1.1 (2017-09-26)
+
+* added support for Symfony 4
+
+## 3.1.0 (2017-03-26)
+
+* Added support for server_log handler
+* Allow configuring VERBOSITY_QUIET in console handlers
+* Fixed autowiring
+* Fixed slackbot handler not escaping channel names properly
+* Fixed slackbot handler requiring `slack_team` instead of `team` to be configured
+
 ## 3.0.3 (2017-01-10)
 
 * Fixed deprecation notices when using Symfony 3.3+ and PHP7+
